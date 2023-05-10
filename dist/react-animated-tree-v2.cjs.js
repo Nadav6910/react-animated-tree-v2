@@ -123,7 +123,7 @@ var Tree = /*#__PURE__*/function (_React$PureComponent) {
   }
   _createClass(Tree, [{
     key: "componentWillReceiveProps",
-    value: function componentWillReceiveProps(props) {
+    value: function componentDidUpdate(props) {
       var _this2 = this;
       this.setState(function (state) {
         return ["open", "visible"].reduce(function (acc, val) {

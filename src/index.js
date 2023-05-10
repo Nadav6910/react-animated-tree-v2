@@ -70,7 +70,7 @@ export default class Tree extends React.PureComponent {
         this.props.onItemClick && this.props.onItemClick(this.state.id);
     };
 
-    componentWillReceiveProps(props) {
+    componentDidUpdate(props) {
         this.setState((state) => {
             return ["open", "visible"].reduce(
                 (acc, val) => (this.props[val] !== props[val] ? { ...acc, [val]: props[val] } : acc),
