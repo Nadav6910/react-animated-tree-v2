@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { Spring, config, animated } from "react-spring/renderprops";
 import * as Icons from "./icons";
@@ -33,8 +33,9 @@ const treeStyles = {
     },
 };
 
-export default class Tree extends React.PureComponent {
+class Tree extends Component {
     static defaultProps = { open: false, visible: true, canHide: false, icons: {} };
+
     static propTypes = {
         open: PropTypes.bool,
         visible: PropTypes.bool,
@@ -48,19 +49,26 @@ export default class Tree extends React.PureComponent {
     };
 
     constructor(props) {
-        super();
-        this.state = { open: props.open, visible: props.visible, immediate: false, id: props.itemId };
+        super(props);
+        this.state = {
+            open: props.open,
+            visible: props.visible,
+            immediate: false,
+            id: props.itemId,
+        };
     }
 
     static getDerivedStateFromProps(nextProps, prevState) {
-        const newState = {};
-        if (nextProps.open !== prevState.open) {
-            newState.open = nextProps.open;
+        if (
+            nextProps.open !== prevState.open ||
+            nextProps.visible !== prevState.visible
+        ) {
+            return {
+                open: nextProps.open,
+                visible: nextProps.visible,
+            };
         }
-        if (nextProps.visible !== prevState.visible) {
-            newState.visible = nextProps.visible;
-        }
-        return Object.keys(newState).length ? newState : null;
+        return null;
     }
 
     toggle = () => {
@@ -133,3 +141,5 @@ export default class Tree extends React.PureComponent {
         );
     }
 }
+
+export default Tree
