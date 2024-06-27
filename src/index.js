@@ -52,6 +52,17 @@ export default class Tree extends React.PureComponent {
         this.state = { open: props.open, visible: props.visible, immediate: false, id: props.itemId };
     }
 
+    static getDerivedStateFromProps(nextProps, prevState) {
+        const newState = {};
+        if (nextProps.open !== prevState.open) {
+            newState.open = nextProps.open;
+        }
+        if (nextProps.visible !== prevState.visible) {
+            newState.visible = nextProps.visible;
+        }
+        return Object.keys(newState).length ? newState : null;
+    }
+
     toggle = () => {
         if (typeof this.props.children !== "undefined") {
             this.props.onItemToggle && this.props.onItemToggle(this.state.id, !this.state.open);
@@ -69,15 +80,6 @@ export default class Tree extends React.PureComponent {
     onItemClick = () => {
         this.props.onItemClick && this.props.onItemClick(this.state.id);
     };
-
-    componentDidUpdate(props) {
-        this.setState((state) => {
-            return ["open", "visible"].reduce(
-                (acc, val) => (this.props[val] !== props[val] ? { ...acc, [val]: props[val] } : acc),
-                {}
-            );
-        });
-    }
 
     render() {
         const { open, visible, immediate } = this.state;
