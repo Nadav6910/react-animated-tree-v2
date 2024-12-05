@@ -1,145 +1,143 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { Spring, config, animated } from "react-spring/renderprops";
+import { useSpring, animated, config } from "react-spring";
 import * as Icons from "./icons";
 
 const treeStyles = {
-    tree: {
-        position: "relative",
-        padding: "4px 0px 0px 0px",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap",
-        overflow: "hidden",
-        verticalAlign: "middle",
-    },
-    toggle: {
-        width: "1em",
-        height: "1em",
-        marginRight: 10,
-        cursor: "pointer",
-        verticalAlign: "middle",
-    },
-    type: {
-        textTransform: "uppercase",
-        fontFamily: "monospace",
-        fontSize: "0.6em",
-        verticalAlign: "middle",
-    },
-    contents: {
-        willChange: "transform, opacity, height",
-        marginLeft: 6,
-        padding: "4px 0px 0px 14px",
-        borderLeft: "1px dashed rgba(255,255,255,0.4)",
-    },
+  tree: {
+    position: "relative",
+    padding: "4px 0px 0px 0px",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    verticalAlign: "middle",
+  },
+  toggle: {
+    width: "1em",
+    height: "1em",
+    marginRight: 10,
+    cursor: "pointer",
+    verticalAlign: "middle",
+  },
+  type: {
+    textTransform: "uppercase",
+    fontFamily: "monospace",
+    fontSize: "0.6em",
+    verticalAlign: "middle",
+  },
+  contents: {
+    willChange: "transform, opacity, height",
+    marginLeft: 6,
+    padding: "4px 0px 0px 14px",
+    borderLeft: "1px dashed rgba(255,255,255,0.4)",
+  },
 };
 
-class Tree extends Component {
-    static defaultProps = { open: false, visible: true, canHide: false, icons: {} };
+const Tree = ({
+  open: propsOpen = false,
+  visible: propsVisible = true,
+  canHide = false,
+  icons = {},
+  content,
+  children,
+  type,
+  style,
+  springConfig,
+  itemId,
+  onItemClick,
+  onItemToggle,
+  onClick,
+}) => {
+  const [open, setOpen] = useState(propsOpen);
+  const [visible, setVisible] = useState(propsVisible);
+  const [immediate, setImmediate] = useState(false);
+  const id = itemId;
 
-    static propTypes = {
-        open: PropTypes.bool,
-        visible: PropTypes.bool,
-        canHide: PropTypes.bool,
-        content: PropTypes.node,
-        springConfig: PropTypes.func,
-        itemId: PropTypes.string,
-        onItemClick: PropTypes.func,
-        onItemToggle: PropTypes.func,
-        icons: PropTypes.object,
-    };
+  useEffect(() => {
+    setOpen(propsOpen);
+  }, [propsOpen]);
 
-    constructor(props) {
-        super(props);
-        this.state = {
-            open: props.open,
-            visible: props.visible,
-            immediate: false,
-            id: props.itemId,
-        };
+  useEffect(() => {
+    setVisible(propsVisible);
+  }, [propsVisible]);
+
+  const toggle = () => {
+    if (children) {
+      onItemToggle && onItemToggle(id, !open);
+      setOpen(!open);
+      setImmediate(false);
     }
+  };
 
-    static getDerivedStateFromProps(nextProps, prevState) {
-        if (
-            nextProps.open !== prevState.open ||
-            nextProps.visible !== prevState.visible
-        ) {
-            return {
-                open: nextProps.open,
-                visible: nextProps.visible,
-            };
-        }
-        return null;
-    }
+  const toggleVisibility = () => {
+    setVisible(!visible);
+    setImmediate(true);
+    onClick && onClick(!visible);
+  };
 
-    toggle = () => {
-        if (typeof this.props.children !== "undefined") {
-            this.props.onItemToggle && this.props.onItemToggle(this.state.id, !this.state.open);
-            this.setState((state) => ({ open: !state.open, immediate: false }));
-        }
-    };
+  const handleItemClick = () => {
+    onItemClick && onItemClick(id);
+  };
 
-    toggleVisibility = () => {
-        this.setState(
-            (state) => ({ visible: !state.visible, immediate: true }),
-            () => this.props.onClick && this.props.onClick(this.state.visible)
-        );
-    };
+  const icon = children
+    ? open
+      ? icons.minusIcon || "Minus"
+      : icons.plusIcon || "Plus"
+    : icons.closeIcon || "Close";
+  const IconComponent = typeof icon === "string" ? Icons[icon] : icon;
+  const IconEye = icons.eyeIcon || Icons.Eye;
 
-    onItemClick = () => {
-        this.props.onItemClick && this.props.onItemClick(this.state.id);
-    };
+  const animationStyles = useSpring({
+    immediate: immediate,
+    config: {
+      ...config.default,
+      restSpeedThreshold: 1,
+      restDisplacementThreshold: 0.01,
+    },
+    from: { height: 0, opacity: 0, transform: "translate3d(20px,0,0)" },
+    to: {
+      height: open ? "auto" : 0,
+      opacity: open ? 1 : 0,
+      transform: open ? "translate3d(0px,0,0)" : "translate3d(20px,0,0)",
+    },
+    ...(springConfig && springConfig(open)),
+  });
 
-    render() {
-        const { open, visible, immediate } = this.state;
-        const { children, content, type, style, canHide, springConfig, icons } = this.props;
+  return (
+    <div style={{ ...treeStyles.tree, ...style }} className="treeview">
+      <IconComponent
+        className="toggle"
+        style={{ ...treeStyles.toggle, opacity: children ? 1 : 0.3 }}
+        onClick={toggle}
+      />
+      <span style={{ ...treeStyles.type, marginRight: type ? 10 : 0 }}>{type}</span>
+      {canHide && (
+        <IconEye
+          className="toggle"
+          style={{ ...treeStyles.toggle, opacity: visible ? 1 : 0.4 }}
+          onClick={toggleVisibility}
+        />
+      )}
+      <span onClick={handleItemClick} style={{ verticalAlign: "middle" }}>
+        {content}
+      </span>
+      <animated.div style={{ ...animationStyles, ...treeStyles.contents }}>
+        {children}
+      </animated.div>
+    </div>
+  );
+};
 
-        const icon = children
-            ? open
-                ? icons.minusIcon || "Minus"
-                : icons.plusIcon || "Plus"
-            : icons.closeIcon || "Close";
-        const Icon = typeof icon === "string" ? Icons[icon] : icon;
-        const IconEye = icons.eyeIcon || Icons.Eye;
+Tree.propTypes = {
+  open: PropTypes.bool,
+  visible: PropTypes.bool,
+  canHide: PropTypes.bool,
+  content: PropTypes.node,
+  springConfig: PropTypes.func,
+  itemId: PropTypes.string,
+  onItemClick: PropTypes.func,
+  onItemToggle: PropTypes.func,
+  icons: PropTypes.object,
+};
 
-        return (
-            <div style={{ ...treeStyles.tree, ...style }} className="treeview">
-                <Icon
-                    className="toggle"
-                    style={{ ...treeStyles.toggle, opacity: children ? 1 : 0.3 }}
-                    onClick={this.toggle}
-                />
-                <span style={{ ...treeStyles.type, marginRight: type ? 10 : 0 }}>{type}</span>
-                {canHide && (
-                    <IconEye
-                        className="toggle"
-                        style={{ ...treeStyles.toggle, opacity: visible ? 1 : 0.4 }}
-                        onClick={this.toggleVisibility}
-                    />
-                )}
-                <span onClick={this.onItemClick} style={{ verticalAlign: "middle" }}>
-                    {content}
-                </span>
-                <Spring
-                    native
-                    immediate={immediate}
-                    config={{
-                        ...config.default,
-                        restSpeedThreshold: 1,
-                        restDisplacementThreshold: 0.01,
-                    }}
-                    from={{ height: 0, opacity: 0, transform: "translate3d(20px,0,0)" }}
-                    to={{
-                        height: open ? "auto" : 0,
-                        opacity: open ? 1 : 0,
-                        transform: open ? "translate3d(0px,0,0)" : "translate3d(20px,0,0)",
-                    }}
-                    {...(springConfig && springConfig(open))}
-                >
-                    {(styles) => <animated.div style={{ ...styles, ...treeStyles.contents }}>{children}</animated.div>}
-                </Spring>
-            </div>
-        );
-    }
-}
-
-export default Tree
+export default Tree;
