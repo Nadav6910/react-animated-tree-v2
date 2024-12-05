@@ -102,7 +102,7 @@ const Tree = ({
     },
     ...(springConfig && springConfig(open)),
   });
-
+  console.log("lalala");
   return (
     <div style={{ ...treeStyles.tree, ...style }} className="treeview">
       <IconComponent
